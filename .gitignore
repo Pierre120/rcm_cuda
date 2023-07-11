@@ -1,0 +1,10 @@
+# C Executables
+*.exe
+*.out
+
+# Image inputs and outputs
+/inputs
+/outputs
+
+# Grayscale image
+/grayscale
