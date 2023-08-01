@@ -3,12 +3,14 @@
 *.out
 
 # Image inputs and outputs
-/inputs
-!/inputs/cat_big.jpg
-!/inputs/cat_small.jpg
-!/inputs/circuit_2.jpg
-!/inputs/circuit.png
-/outputs
+inputs/*
+!inputs/cat_big.jpg
+!inputs/cat_small.jpg
+!inputs/circuit_2.jpg
+!inputs/circuit.png
+!inputs/house_drawing.jpg
+outputs/*
+!outputs/house_drawing_*.jpg
 
 # Grayscale image
-/grayscale
+grayscale/
