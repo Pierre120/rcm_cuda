@@ -59,7 +59,7 @@ robCompMask(unsigned char *img_out, unsigned char *img_in, int width, int height
             }
 
             // Set the output pixel to the sum
-            img_out[h * width + w] = sum;
+            img_out[h * width + w] = (unsigned char) abs(sum);
         }
     }
 }
