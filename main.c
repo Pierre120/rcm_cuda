@@ -75,6 +75,7 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
     int sum, rowStart, colStart, maskRowIndex, maskColIndex, maxRow, maxCol;
     for (int h = 0; h < height; h++) {
         for (int w = 0; w < width; w++) {
+            // printf("h = %d, w = %d\n", h, w);
             // Reset sum 
             sum = 0;
 
@@ -92,6 +93,16 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
                 maskRowIndex = maxIndex;
                 maxRow = GAUSSIAN_MASK_SIZE;
             }
+            if(h > 0 && h < maxIndex) {
+                rowStart = -h;
+                maskRowIndex = h;
+                maxRow = GAUSSIAN_MASK_SIZE;
+            }
+            if(h >= height - maxIndex && h < height - 1) {
+                rowStart = -maxIndex;
+                maskRowIndex = 0;
+                maxRow = GAUSSIAN_MASK_SIZE - (height - h - 1);
+            }
             if(h == height - 1) {
                 rowStart = -maxIndex;
                 maskRowIndex = 0;
@@ -101,6 +112,16 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
                 colStart = 0;
                 maskColIndex = maxIndex;
                 maxCol = GAUSSIAN_MASK_SIZE;
+            }
+            if(w > 0 && w < maxIndex) {
+                colStart = -w;
+                maskColIndex = w;
+                maxCol = GAUSSIAN_MASK_SIZE;
+            }
+            if(w >= width - maxIndex && w < height - 1) {
+                colStart = -maxIndex;
+                maskColIndex = 0;
+                maxCol = GAUSSIAN_MASK_SIZE - (width - w - 1);
             }
             if(w == width - 1) {
                 colStart = -maxIndex;
@@ -117,8 +138,10 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
 
             // Set the output pixel to the sum
             img_in[h * width + w] = (unsigned char) abs(sum);
+            // printf("h = %d, w = %d\n", h, w);
         }
     }
+    // printf("Max height = %d, Max width = %d\n", height - 1, width - 1);
 }
 
 void generateGaussianBlurMask(double mask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE]) {
