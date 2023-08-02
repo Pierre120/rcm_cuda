@@ -304,7 +304,7 @@ int main() {
         // Ask for sigma value
         double sigma = 0;
         while(sigma < 0.3) {
-            printf("Enter the sigma value (positive number > 0.3): ");
+            printf("Enter the sigma value (positive number >= 0.3): ");
             scanf("%lf%*c", &sigma); 
         }
 
