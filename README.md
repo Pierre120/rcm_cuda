@@ -14,20 +14,20 @@ Output images can be seen under the **`/outputs`** directory.
 
 ```
 # Windows
-gcc -std=c11 -Wall main.c -o rcm.exe
+gcc -std=c11 -Wall rcm_c.c -o rcm_c.exe
 
 # Linux/MacOS
-gcc -std=c11 -Wall main.c -o rcm.out
+gcc -std=c11 -Wall rcm_c.c -o rcm_c.out
 ```
 
 ## Running program
 
 ```
 # Windows
-rcm
+rcm_c
 
 # Linux/MacOS
-./rcm.out
+./rcm_c.out
 ```
 
 ## Entering filename for image input

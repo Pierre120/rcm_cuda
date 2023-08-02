@@ -75,7 +75,6 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
     int sum, rowStart, colStart, maskRowIndex, maskColIndex, maxRow, maxCol;
     for (int h = 0; h < height; h++) {
         for (int w = 0; w < width; w++) {
-            // printf("h = %d, w = %d\n", h, w);
             // Reset sum 
             sum = 0;
 
@@ -138,10 +137,8 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
 
             // Set the output pixel to the sum
             img_in[h * width + w] = (unsigned char) abs(sum);
-            // printf("h = %d, w = %d\n", h, w);
         }
     }
-    // printf("Max height = %d, Max width = %d\n", height - 1, width - 1);
 }
 
 void generateGaussianBlurMask(double mask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE]) {
@@ -227,6 +224,7 @@ int isFileTypeSupported(char* filename) {
 
 
 int main() {
+    const int NUM_DIRECTIONS = 8;
     // Declare Robinson's Compass mask
     const int ROBINSON_COMPASS_MASK[8][3][3] = {
         {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}, // N
@@ -237,6 +235,9 @@ int main() {
         {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}, // SE
         {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}, // E
         {{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}}  // NE
+    };
+    const char filename_suffix[8][3] = {
+        "N\0", "NW\0", "W\0", "SW\0", "S\0", "SE\0", "E\0", "NE\0"
     };
     // Declare Gaussian Blur Mask initialized to zero
     double gaussianMask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE] = { { 0 } };
@@ -251,7 +252,7 @@ int main() {
     printf("Enter the image filename: ");
     scanf("%[^\n]%*c", filename);
     // Debugging purposes: print filename
-    printf("Filename: %s\n", filename); // expected to print only one newline char
+    printf("\nIMAGE INFORMATION\nFilename: %s\n", filename); // expected to print only one newline char
 
     // Check if filetype is supported for this program
     if (!isFileTypeSupported(filename)) {
@@ -284,13 +285,13 @@ int main() {
         return 1; // exit the program with 1 error
     }
 
-    printf("Before Gaussian Blur Mask generation\n");
+    // printf("Before Gaussian Blur Mask generation\n");
     // Generate Gaussian Blur mask
     generateGaussianBlurMask(gaussianMask);
-    printf("Before Gaussian Blur\n");
+    // printf("Before Gaussian Blur\n");
     // Apply Gaussian Blur mask to input image
     gaussianBlurMask(img_in, width, height, gaussianMask);
-    printf("After Gaussian Blur\n");
+    // printf("After Gaussian Blur\n");
 
     // Allocate memory for the output image
     img_out = (unsigned char *) malloc(width * height * channels * sizeof(unsigned char));
@@ -300,101 +301,21 @@ int main() {
         return 1; // exit the program with 1 error
     }
 
-    // Apply the Robinson's Compass mask for N direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[0]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "N\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
+    // Perform robinson compass mask in all directions
+    printf("\nPERFORMING ROBINSON COMPASS MASK EDGE DETECTION...\n");
+    for(int d = 0; d < NUM_DIRECTIONS; d++) {
+        robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[d]);
+        // Generate output filename
+        generateOutputFilename(filename, output_filename, filename_suffix[d]);
+        // Debugging purposes: print output filename
+        printf("Output filename: %s\n", output_filename);
+        // Save output image
+        if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
+            printf("Error in saving the output image.\n");
+            return 1; // exit the program with 1 error
+        }
     }
-
-    // Apply the Robinson's Compass mask for NW direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[1]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "NW\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
-    }
-
-    // Apply the Robinson's Compass mask for W direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[2]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "W\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
-    }
-
-    // Apply the Robinson's Compass mask for SW direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[3]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "SW\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
-    }
-
-    // Apply the Robinson's Compass mask for S direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[4]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "S\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
-    }
-
-    // Apply the Robinson's Compass mask for SE direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[5]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "SE\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
-    }
-
-    // Apply the Robinson's Compass mask for E direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[6]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "E\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
-    }
-
-    // Apply the Robinson's Compass mask for NE direction
-    robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[7]);
-    // Generate output filename
-    generateOutputFilename(filename, output_filename, "NE\0");
-    // Debugging purposes: print output filename
-    printf("Output filename: %s\n", output_filename);
-    // Save output image
-    if(!stbi_write_jpg(output_filename, width, height, GRAY, img_out, 100)) {
-        printf("Error in saving the output image.\n");
-        return 1; // exit the program with 1 error
-    }
+    printf("DONE\n\n");
 
     return 0;
 }
