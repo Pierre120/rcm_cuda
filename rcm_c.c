@@ -11,8 +11,8 @@
 #define MAX_CHAR 32
 #define GRAY 1
 // #define RGB 3
-#define GAUSSIAN_MASK_SIZE 5
-#define GAUSSIAN_SIGMA 5.0
+// #define GAUSSIAN_MASK_SIZE 5
+// #define GAUSSIAN_SIGMA 5.0
 
 // For the PI value in C
 #ifndef M_PI
@@ -70,7 +70,7 @@ robCompMask(unsigned char *img_out, unsigned char *img_in, int width, int height
     }
 }
 
-void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE]) {
+void gaussianBlurMask(unsigned char *img_in, int width, int height, int GAUSSIAN_MASK_SIZE, double mask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE]) {
     const int maxIndex = GAUSSIAN_MASK_SIZE / 2;
     int sum, rowStart, colStart, maskRowIndex, maskColIndex, maxRow, maxCol;
     for (int h = 0; h < height; h++) {
@@ -94,18 +94,13 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
             }
             if(h > 0 && h < maxIndex) {
                 rowStart = -h;
-                maskRowIndex = h;
+                maskRowIndex = maxIndex - h;
                 maxRow = GAUSSIAN_MASK_SIZE;
             }
-            if(h >= height - maxIndex && h < height - 1) {
+            if(h >= height - maxIndex && h <= height - 1) {
                 rowStart = -maxIndex;
                 maskRowIndex = 0;
-                maxRow = GAUSSIAN_MASK_SIZE - (height - h - 1);
-            }
-            if(h == height - 1) {
-                rowStart = -maxIndex;
-                maskRowIndex = 0;
-                maxRow = maxIndex + 1;
+                maxRow = maxIndex + (height - h);
             }
             if(w == 0) {
                 colStart = 0;
@@ -114,18 +109,13 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
             }
             if(w > 0 && w < maxIndex) {
                 colStart = -w;
-                maskColIndex = w;
+                maskColIndex = maxIndex - w;
                 maxCol = GAUSSIAN_MASK_SIZE;
             }
-            if(w >= width - maxIndex && w < height - 1) {
+            if(w >= width - maxIndex && w <= height - 1) {
                 colStart = -maxIndex;
                 maskColIndex = 0;
-                maxCol = GAUSSIAN_MASK_SIZE - (width - w - 1);
-            }
-            if(w == width - 1) {
-                colStart = -maxIndex;
-                maskColIndex = 0;
-                maxCol = maxIndex + 1;
+                maxCol = maxIndex + (width - w);
             }
 
             // Apply the mask
@@ -141,7 +131,7 @@ void gaussianBlurMask(unsigned char *img_in, int width, int height, double mask[
     }
 }
 
-void generateGaussianBlurMask(double mask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE]) {
+void generateGaussianBlurMask(int GAUSSIAN_MASK_SIZE, double GAUSSIAN_SIGMA, double mask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE]) {
     // Declare the Gaussian mask
     double sum = 0;
     int max_index = GAUSSIAN_MASK_SIZE / 2;
@@ -240,7 +230,7 @@ int main() {
         "N\0", "NW\0", "W\0", "SW\0", "S\0", "SE\0", "E\0", "NE\0"
     };
     // Declare Gaussian Blur Mask initialized to zero
-    double gaussianMask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE] = { { 0 } };
+    // double gaussianMask[GAUSSIAN_MASK_SIZE][GAUSSIAN_MASK_SIZE] = { { 0 } };
 
     int width, height, channels;
     char filename[MAX_CHAR] = { 0 };
@@ -285,13 +275,38 @@ int main() {
         return 1; // exit the program with 1 error
     }
 
-    // printf("Before Gaussian Blur Mask generation\n");
-    // Generate Gaussian Blur mask
-    generateGaussianBlurMask(gaussianMask);
-    // printf("Before Gaussian Blur\n");
-    // Apply Gaussian Blur mask to input image
-    gaussianBlurMask(img_in, width, height, gaussianMask);
-    // printf("After Gaussian Blur\n");
+
+    // --- GAUSSIAN BLUR MASK (SMOOTHING FILTER) ---
+    // Ask user if use a smoothing filter
+    int useSmoothingFilter = 0;
+    printf("\nDo you want to use a smoothing filter? (1 - Yes, 0 - No): ");
+    scanf("%d%*c", &useSmoothingFilter);
+    if(useSmoothingFilter) {
+        // Ask for the mask size
+        int maskSize = 0;
+        while(maskSize % 2 == 0 && maskSize < 3) {
+            printf("Enter the mask size (odd number >= 3): ");
+            scanf("%d%*c", &maskSize);
+        }
+        // Ask for sigma value
+        double sigma = 0;
+        while(sigma < 0.3) {
+            printf("Enter the sigma value (positive number > 0.3): ");
+            scanf("%lf%*c", &sigma); 
+        }
+
+        // Declare Gaussian Blur Mask initialized to zero
+        double gaussianMask[maskSize][maskSize];
+        // Generate Gaussian Blur mask
+        printf("\nGENERATING GAUSSIAN BLUR MASK...\n");
+        generateGaussianBlurMask(maskSize, sigma, gaussianMask);
+        printf("DONE\n");
+        // Apply Gaussian Blur mask to input image
+        printf("\nAPPLYING GAUSSIAN BLUR MASK TO INPUT IMAGE...\n");
+        gaussianBlurMask(img_in, width, height, maskSize, gaussianMask);
+        printf("DONE\n");
+    }
+
 
     // Allocate memory for the output image
     img_out = (unsigned char *) malloc(width * height * channels * sizeof(unsigned char));
@@ -301,6 +316,8 @@ int main() {
         return 1; // exit the program with 1 error
     }
 
+
+    // --- ROBINSON'S COMPASS MASK EDGE DETECTION ---
     // Perform robinson compass mask in all directions
     printf("\nPERFORMING ROBINSON COMPASS MASK EDGE DETECTION...\n");
     for(int d = 0; d < NUM_DIRECTIONS; d++) {
