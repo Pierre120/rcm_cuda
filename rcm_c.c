@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 // Headers for image input and output
 #define STB_IMAGE_IMPLEMENTATION
@@ -238,6 +239,16 @@ int main() {
     char output_filename[MAX_CHAR + 16] = "./outputs/\0";
     unsigned char *img_in, *img_out;
 
+    // timer variables
+    clock_t start, end;
+    double 
+        rcm_avg = 0.0, 
+        rcm_total = 0.0,
+        gb_mask = 0.0,
+        gb_op = 0.0,
+        gb_total = 0.0,
+        rcm_gb_total = 0.0;
+
     // Ask for the image filename
     printf("Enter the image filename: ");
     scanf("%[^\n]%*c", filename);
@@ -278,9 +289,11 @@ int main() {
 
     // --- GAUSSIAN BLUR MASK (SMOOTHING FILTER) ---
     // Ask user if use a smoothing filter
-    int useSmoothingFilter = 0;
-    printf("\nDo you want to use a smoothing filter? (1 - Yes, 0 - No): ");
-    scanf("%d%*c", &useSmoothingFilter);
+    int useSmoothingFilter = -1;
+    while(useSmoothingFilter != 1 && useSmoothingFilter != 0) {
+        printf("\nDo you want to use a smoothing filter? (1 - Yes, 0 - No): ");
+        scanf("%d%*c", &useSmoothingFilter);
+    }
     if(useSmoothingFilter) {
         // Ask for the mask size
         int maskSize = 0;
@@ -299,12 +312,20 @@ int main() {
         double gaussianMask[maskSize][maskSize];
         // Generate Gaussian Blur mask
         printf("\nGENERATING GAUSSIAN BLUR MASK...\n");
+        start = clock();
         generateGaussianBlurMask(maskSize, sigma, gaussianMask);
+        end = clock();
         printf("DONE\n");
+        gb_mask = ((double)(end - start)) * 1e6 / CLOCKS_PER_SEC; // microseconds
         // Apply Gaussian Blur mask to input image
         printf("\nAPPLYING GAUSSIAN BLUR MASK TO INPUT IMAGE...\n");
+        start = clock();
         gaussianBlurMask(img_in, width, height, maskSize, gaussianMask);
+        end = clock();
         printf("DONE\n");
+        gb_op = ((double)(end - start)) * 1e6 / CLOCKS_PER_SEC; // microseconds
+        // Get total for Gaussian Blur Mask Operation
+        gb_total = gb_mask + gb_op;
     }
 
 
@@ -321,7 +342,11 @@ int main() {
     // Perform robinson compass mask in all directions
     printf("\nPERFORMING ROBINSON COMPASS MASK EDGE DETECTION...\n");
     for(int d = 0; d < NUM_DIRECTIONS; d++) {
+        // Perform Robinson Compass Mask
+        start = clock();
         robCompMask(img_out, img_in, width, height, ROBINSON_COMPASS_MASK[d]);
+        end = clock();
+        rcm_total += ((double)(end - start)) * 1e6 / CLOCKS_PER_SEC; // microseconds
         // Generate output filename
         generateOutputFilename(filename, output_filename, filename_suffix[d]);
         // Debugging purposes: print output filename
@@ -332,7 +357,19 @@ int main() {
             return 1; // exit the program with 1 error
         }
     }
-    printf("DONE\n\n");
+    printf("DONE\n");
+
+    // Calculate time elapsed for Robinson's Compass Mask Edge Detection
+    rcm_avg = rcm_total / NUM_DIRECTIONS;
+    rcm_gb_total = rcm_total + gb_total;
+    // Display time elapsed for Robinson's Compass Mask Edge Detection
+    printf("\n --- TIME ELAPSED --- \n");
+    printf("Gaussian Blur Mask Generation (microseconds): %lf us\n", gb_mask);
+    printf("Gaussian Blur Mask Operation (microseconds): %lf us\n", gb_op);
+    printf("Gaussian Blur Mask Total (microseconds): %lf us\n", gb_total);
+    printf("Robinson's Compass Mask Average (microseconds): %lf us\n", rcm_avg);
+    printf("Robinson's Compass Mask Total (microseconds): %lf us\n", rcm_total);
+    printf("Robinson's Compass Mask + Gaussian Blur Mask Total (microseconds): %lf us\n\n", rcm_gb_total);
 
     return 0;
 }
